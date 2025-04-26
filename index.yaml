@@ -1,5 +1,16 @@
 apiVersion: v1
 entries:
+  cvat:
+  - apiVersion: v2
+    appVersion: 2.1.0
+    created: "2025-04-26T03:40:38.831520326Z"
+    description: A Helm chart for CVAT
+    digest: aefaac372f28a3a15b9941bdab1eedd495a94a13cbe53cf77d0f3c94198bec18
+    name: cvat
+    type: application
+    urls:
+    - https://github.com/sebagarayco/helm-charts/releases/download/cvat-0.2.5/cvat-0.2.5.tgz
+    version: 0.2.5
   external-service:
   - apiVersion: v2
     appVersion: v1.0.0
@@ -21,4 +32,4 @@ entries:
     urls:
     - https://github.com/sebagarayco/helm-charts/releases/download/external-service-1.1.0/external-service-1.1.0.tgz
     version: 1.1.0
-generated: "2025-04-26T03:03:57.541492358Z"
+generated: "2025-04-26T03:40:38.831530585Z"
