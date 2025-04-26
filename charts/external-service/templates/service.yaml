@@ -1,0 +1,64 @@
+{{- range .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  namespace: {{ .namespace | default "default" }}
+spec:
+  type: ClusterIP
+  ports:
+    {{- range .service.ports }}
+    - port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ .name }}
+  namespace: {{ .namespace | default "default" }}
+subsets:
+  - addresses:
+      {{- range .endpoint.addresses }}
+      - ip: {{ . }}
+      {{- end }}
+    ports:
+      {{- range .endpoint.ports }}
+      - port: {{ .port }}
+      {{- end }}
+{{- if and .ingress.enabled .ingress.host }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .name }}
+  namespace: {{ .namespace | default "default" }}
+  annotations:
+    {{- if .ingress.annotations }}
+    {{- toYaml .ingress.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .ingress.className }}
+  ingressClassName: {{ .ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ .ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .name }}
+                port:
+                  number: {{ (index .service.ports 0).port }}
+  {{- if .ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .ingress.host }}
+      secretName: {{ .name }}-tls
+  {{- end }}
+{{- end }}
+{{- end }}

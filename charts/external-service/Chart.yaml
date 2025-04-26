@@ -1,0 +1,15 @@
+apiVersion: v2
+appVersion: v1.0.0
+description: This Helm Chart allows services that operate outside the Kubernetes cluster to be accessible via the ingress controller.
+keywords:
+- service
+- external-service
+kubeVersion: ^1.23.0
+maintainers:
+- name: sebagarayco
+  url: https://https://github.com/sebagarayco
+name: external-service
+sources:
+- https://github.com/sebagarayco/helm-charts/tree/main/charts/external-service
+type: application
+version: 1.0.0
