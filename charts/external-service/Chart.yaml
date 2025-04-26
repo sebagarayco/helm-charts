@@ -7,9 +7,9 @@ keywords:
 kubeVersion: ^1.23.0
 maintainers:
 - name: sebagarayco
-  url: https://https://github.com/sebagarayco
+  url: https://github.com/sebagarayco
 name: external-service
 sources:
 - https://github.com/sebagarayco/helm-charts/tree/main/charts/external-service
 type: application
-version: 1.0.0
+version: 1.1.0
