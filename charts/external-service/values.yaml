@@ -1,21 +1,21 @@
-#services: []
+services: []
 # Example:
-services:
-  - name: proxmox
-    namespace: default
-    service:
-      ports:
-        - port: 8006
-          targetPort: 8006
-          protocol: TCP
-    endpoint:
-      addresses:
-        - 192.168.1.x
-      ports:
-        - port: 8006
-    ingress:
-      enabled: true
-      host: proxmox.example.com
-      className: nginx
-      tls: true
-      annotations: {}
+# services:
+#  - name: proxmox
+#    namespace: default
+#    service:
+#      ports:
+#        - port: 8006
+#          targetPort: 8006
+#          protocol: TCP
+#    endpoint:
+#      addresses:
+#        - 192.168.1.x
+#      ports:
+#        - port: 8006
+#    ingress:
+#      enabled: true
+#      host: proxmox.example.com
+#      className: nginx
+#      tls: true
+#      annotations: {}
