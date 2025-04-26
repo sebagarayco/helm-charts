@@ -1,0 +1,62 @@
+superUser:
+  create: true
+  username: admin
+  initialPassword: cvat
+  email: sebagarayco@gmail.com
+
+ingress:
+  enabled: true
+  host: cvat.kube-public
+  clusterIssuer: selfsigned-ca-issuer
+  ingressClassName: nginx
+  certificateArn: ""
+  cognitoEnabled: "false"
+  cognitoUserPool: ""
+  cognitoUserPoolClient: ""
+  cognitoUserPoolDomain: ""
+
+opa:
+  repository: sebagarayco/opa-cvat-rules
+  ### if you want to use skaffold, use opa.image
+  # image: opa
+  # imagePullSecret: registry-creds
+
+
+volume:
+  data:
+    size: 6Gi
+    # storageClassName: gp2
+  keys:
+    size: 1Gi
+    # storageClassName: gp2
+  logs:
+    size: 1Gi
+    # storageClassName: gp2
+  share:
+    size: 1Gi
+    create: true
+    name: cvat-share
+    # storageClassName: gp2
+
+database:
+  create: true
+  # when using a block type volume you must mount postgres data in a subdir otherwise postgres will fail to start.
+  # set this to false for upgrades from old release of this chart
+  createSubdir: true
+  # storageClassName: gp2
+
+  size: 2Gi
+  # for zalando integration set create to false
+  zalando:
+    # integrate with zalando postgres operator
+    enable: false
+    databaseUser: cvat
+    databaseCluster: cvat-db
+    databaseName: cvat
+
+workloads:
+  tolerations:
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
