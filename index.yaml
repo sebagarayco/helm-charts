@@ -32,4 +32,15 @@ entries:
     urls:
     - https://github.com/sebagarayco/helm-charts/releases/download/external-service-1.1.0/external-service-1.1.0.tgz
     version: 1.1.0
-generated: "2025-04-26T03:40:38.831530585Z"
+  filestash:
+  - apiVersion: v2
+    appVersion: f72b630
+    created: "2025-04-28T11:51:27.057414932Z"
+    description: A Helm chart for Filestash
+    digest: 3d4464551d77ef8fd9a691557c33e8b31046d08b8ea97824c27bfc1eb0a4377a
+    name: filestash
+    type: application
+    urls:
+    - https://github.com/sebagarayco/helm-charts/releases/download/filestash-0.2.0/filestash-0.2.0.tgz
+    version: 0.2.0
+generated: "2025-04-28T11:51:27.05742495Z"
