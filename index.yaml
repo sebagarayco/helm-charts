@@ -1,5 +1,16 @@
 apiVersion: v1
 entries:
+  code-server:
+  - apiVersion: v2
+    appVersion: 4.99.3
+    created: "2025-04-29T16:53:15.286504555Z"
+    description: A Helm chart for coder/code-server
+    digest: aa64d12c8089d21fac7297250c53f2781262086ae3c7a737e61d4657aa4040b9
+    name: code-server
+    type: application
+    urls:
+    - https://github.com/sebagarayco/helm-charts/releases/download/code-server-3.26.3/code-server-3.26.3.tgz
+    version: 3.26.3
   cvat:
   - apiVersion: v2
     appVersion: 2.1.0
@@ -43,4 +54,4 @@ entries:
     urls:
     - https://github.com/sebagarayco/helm-charts/releases/download/filestash-0.2.0/filestash-0.2.0.tgz
     version: 0.2.0
-generated: "2025-04-28T11:51:27.05742495Z"
+generated: "2025-04-29T16:53:15.286513723Z"
