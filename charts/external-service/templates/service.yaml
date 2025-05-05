@@ -47,6 +47,7 @@ spec:
     - host: {{ .ingress.host }}
       http:
         paths:
+        {{- if .ingress.paths }}
         {{- range .ingress.paths }}
         - path: {{ .path }}
           pathType: {{ .pathType | default "Prefix" }}
@@ -55,6 +56,15 @@ spec:
               name: {{ .name }}
               port:
                 number: {{ .port }}
+          {{- end }}
+        {{- else }}
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .name }}
+              port:
+                number: {{ (index .service.ports 0).port }}
         {{- end }}
   {{- if .ingress.tls }}
   tls:
