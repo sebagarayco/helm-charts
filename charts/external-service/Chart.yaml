@@ -12,4 +12,4 @@ name: external-service
 sources:
 - https://github.com/sebagarayco/helm-charts/tree/main/charts/external-service
 type: application
-version: 1.2.2
+version: 1.2.3

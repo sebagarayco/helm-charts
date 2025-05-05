@@ -55,7 +55,7 @@ spec:
           pathType: {{ .pathType | default "Prefix" }}
           backend:
             service:
-              name: {{ .name }}
+              name: {{ $service.name }}
               port:
                 number: {{ .port }}
           {{- end }}
@@ -64,7 +64,7 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: {{ .name }}
+              name: {{ $service.name }}
               port:
                 number: {{ (index .service.ports 0).port }}
         {{- end }}
