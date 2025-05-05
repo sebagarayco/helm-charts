@@ -1,29 +1,30 @@
-services:
-- name: s3
-  namespace: default
-  service:
-    ports:
-      - port: 9000
-        targetPort: 9000
-      - port: 9001
-        targetPort: 9001
-  endpoint:
-    addresses:
-      - 10.0.0.10
-    ports:
-      - port: 9000
-      - port: 9001
-  ingress:
-    enabled: true
-    host: ingress.host.loc
-    className: nginx
-    tls: true
-    paths:
-      - path: /
-        pathType: Prefix
-        port: 9000
-        name: api
-      - path: /console
-        pathType: Prefix
-        port: 9001
-        name: console
+services: []
+# services:
+#  - name: s3
+#    namespace: default
+#    service:
+#      ports:
+#        - port: 9000
+#          targetPort: 9000
+#        - port: 9001
+#          targetPort: 9001
+#    endpoint:
+#      addresses:
+#        - 10.0.0.10
+#      ports:
+#        - port: 9000
+#        - port: 9001
+#    ingress:
+#      enabled: true
+#      host: ingress.host.loc
+#      className: nginx
+#      tls: true
+#      paths:
+#        - path: /
+#          pathType: Prefix
+#          port: 9000
+#          name: api
+#        - path: /console
+#          pathType: Prefix
+#          port: 9001
+#          name: console
