@@ -12,6 +12,7 @@ spec:
     - port: {{ .port }}
       targetPort: {{ .targetPort }}
       protocol: {{ .protocol | default "TCP" }}
+      name: {{ .name | default (printf "%d-%d" .name .port )}}
     {{- end }}
 ---
 apiVersion: v1
@@ -27,6 +28,7 @@ subsets:
     ports:
       {{- range .endpoint.ports }}
       - port: {{ .port }}
+        name: {{ .name | default (printf "%d-%d" .name .port )}}
       {{- end }}
 {{- if and .ingress.enabled .ingress.host }}
 ---
