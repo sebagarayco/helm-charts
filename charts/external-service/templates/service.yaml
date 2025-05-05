@@ -47,13 +47,15 @@ spec:
     - host: {{ .ingress.host }}
       http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ .name }}
-                port:
-                  number: {{ (index .service.ports 0).port }}
+        {{- range .ingress.paths }}
+        - path: {{ .path }}
+          pathType: {{ .pathType | default "Prefix" }}
+          backend:
+            service:
+              name: {{ .name }}
+              port:
+                number: {{ .port }}
+        {{- end }}
   {{- if .ingress.tls }}
   tls:
     - hosts:

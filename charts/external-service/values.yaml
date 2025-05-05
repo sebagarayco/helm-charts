@@ -1,21 +1,30 @@
 services: []
-# Example:
 # services:
-#  - name: proxmox
+#  - name: s3
 #    namespace: default
 #    service:
 #      ports:
-#        - port: 8006
-#          targetPort: 8006
-#          protocol: TCP
+#        - port: 9000
+#          targetPort: 9000
+#        - port: 9001
+#          targetPort: 9001
 #    endpoint:
 #      addresses:
-#        - 192.168.1.x
+#        - 10.0.0.10
 #      ports:
-#        - port: 8006
+#        - port: 9000
+#        - port: 9001
 #    ingress:
 #      enabled: true
-#      host: proxmox.example.com
+#      host: ingress.host.loc
 #      className: nginx
 #      tls: true
-#      annotations: {}
+#      paths:
+#        - path: /
+#          pathType: Prefix
+#          port: 9000
+#          name: api
+#        - path: /console
+#          pathType: Prefix
+#          port: 9001
+#          name: console
