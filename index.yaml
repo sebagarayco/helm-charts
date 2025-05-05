@@ -25,6 +25,26 @@ entries:
   external-service:
   - apiVersion: v2
     appVersion: v1.0.0
+    created: "2025-05-05T21:01:39.277072025Z"
+    description: This Helm Chart allows services that operate outside the Kubernetes
+      cluster to be accessible via the ingress controller.
+    digest: bfa20a2d03dfe5b7f0b30af32d02fd863b16fd5f3dc27537a96d5d99eb9df009
+    keywords:
+    - service
+    - external-service
+    kubeVersion: ^1.23.0
+    maintainers:
+    - name: sebagarayco
+      url: https://github.com/sebagarayco
+    name: external-service
+    sources:
+    - https://github.com/sebagarayco/helm-charts/tree/main/charts/external-service
+    type: application
+    urls:
+    - https://github.com/sebagarayco/helm-charts/releases/download/external-service-1.2.1/external-service-1.2.1.tgz
+    version: 1.2.1
+  - apiVersion: v2
+    appVersion: v1.0.0
     created: "2025-05-05T20:41:06.654850637Z"
     description: This Helm Chart allows services that operate outside the Kubernetes
       cluster to be accessible via the ingress controller.
@@ -74,4 +94,4 @@ entries:
     urls:
     - https://github.com/sebagarayco/helm-charts/releases/download/filestash-0.2.0/filestash-0.2.0.tgz
     version: 0.2.0
-generated: "2025-05-05T20:41:06.654864583Z"
+generated: "2025-05-05T21:01:39.277091822Z"
