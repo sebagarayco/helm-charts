@@ -1,0 +1,21 @@
+Asados Verde has been installed.
+
+{{- if not .Values.app.existingSecret }}
+WARNING: app.existingSecret is empty. The production container requires bootstrap
+administrator settings on every startup. Create a Secret and set app.existingSecret
+before deploying the Asados Verde image.
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+Application URL:
+{{- range .Values.ingress.hosts }}
+  https://{{ .host }}
+{{- end }}
+{{- else }}
+Run this command to access the application locally:
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "asadosverde.fullname" . }} 3000:{{ .Values.service.port }}
+Then open http://127.0.0.1:3000.
+{{- end }}
+
+The container runs Prisma migrations and the idempotent seed before starting the
+server. No separate migration Job is installed.

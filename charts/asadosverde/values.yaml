@@ -1,0 +1,247 @@
+# Default values for asadosverde.
+
+# -- Number of application replicas. Keep at one with ReadWriteOnce persistence.
+replicaCount: 1
+
+image:
+  # -- Asados Verde container image repository.
+  repository: ghcr.io/sebagarayco/asadosverde
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+  # -- Image tag. Defaults to the chart appVersion when empty.
+  tag: ""
+
+# -- Image pull secrets, required when the GHCR package is private.
+imagePullSecrets: []
+# -- Override the chart name.
+nameOverride: ""
+# -- Override the fully qualified application name.
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Create a service account for the application.
+  create: true
+  # -- Service account annotations.
+  annotations: {}
+  # -- Existing service account name. Generated when empty and create is true.
+  name: ""
+  # -- Mount the service account token in the application pod.
+  automountServiceAccountToken: false
+
+# -- Additional application pod annotations.
+podAnnotations: {}
+# -- Additional application pod labels.
+podLabels: {}
+
+# -- Application pod security context.
+podSecurityContext:
+  fsGroup: 1001
+  fsGroupChangePolicy: OnRootMismatch
+
+# -- Application container security context.
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+app:
+  # -- Existing Secret imported with envFrom for bootstrap admin, verification pepper, Resend, Google OAuth, and other application settings.
+  existingSecret: ""
+  # -- Additional envFrom entries for the application container.
+  envFrom: []
+  # -- Additional environment variables for the application container.
+  env: []
+  # -- Override the image entrypoint. Keep empty to run the container migration, seed, and server startup contract.
+  command: []
+  # -- Override image arguments.
+  args: []
+
+# -- Enable the application's demo dataset. Production deployments should keep this false.
+mockData: false
+
+service:
+  # -- Kubernetes Service type.
+  type: ClusterIP
+  # -- Service port.
+  port: 3000
+  # -- Application container port.
+  targetPort: 3000
+  # -- Optional fixed NodePort.
+  nodePort: ""
+  # -- Service annotations.
+  annotations: {}
+
+ingress:
+  # -- Enable an Ingress for the application.
+  enabled: false
+  # -- Ingress class name.
+  className: ""
+  # -- Ingress annotations.
+  annotations: {}
+  # -- Ingress hosts and paths.
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration.
+  tls: []
+
+persistence:
+  # -- Persist uploaded profile images.
+  enabled: true
+  # -- Use an existing PVC instead of creating one.
+  existingClaim: ""
+  # -- PVC annotations.
+  annotations: {}
+  # -- PVC access modes.
+  accessModes:
+    - ReadWriteOnce
+  # -- Requested upload storage size.
+  size: 2Gi
+  # -- Storage class. Empty uses the cluster default; "-" disables dynamic provisioning.
+  storageClass: ""
+
+# -- Deployment revision history limit.
+revisionHistoryLimit: 3
+strategy:
+  # -- Deployment update strategy. Recreate is safe with the default ReadWriteOnce upload volume and startup migrations.
+  type: Recreate
+
+probes:
+  startup:
+    # -- Enable the startup probe.
+    enabled: true
+    path: /api/health
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 60
+  readiness:
+    # -- Enable the readiness probe.
+    enabled: true
+    path: /api/health
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  liveness:
+    # -- Enable the liveness probe.
+    enabled: true
+    path: /api/health
+    periodSeconds: 20
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# -- Application resource requests and limits.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+# -- Application pod node selector.
+nodeSelector: {}
+# -- Application pod tolerations.
+tolerations: []
+# -- Application pod affinity rules.
+affinity: {}
+# -- Grace period for application pod termination.
+terminationGracePeriodSeconds: 30
+
+postgresql:
+  # -- Deploy the bundled PostgreSQL StatefulSet.
+  enabled: true
+  image:
+    # -- PostgreSQL image repository.
+    repository: postgres
+    # -- PostgreSQL image tag.
+    tag: "17-alpine"
+    # -- PostgreSQL image pull policy.
+    pullPolicy: IfNotPresent
+  auth:
+    # -- PostgreSQL database name.
+    database: asadosverde
+    # -- PostgreSQL user name.
+    username: asadosverde
+    # -- Existing Secret containing both passwordKey and databaseUrlKey. When empty, the chart generates and preserves both values.
+    existingSecret: ""
+    # -- Password key in the PostgreSQL Secret.
+    passwordKey: postgres-password
+    # -- DATABASE_URL key in the PostgreSQL Secret.
+    databaseUrlKey: database-url
+  service:
+    # -- PostgreSQL Service port.
+    port: 5432
+    # -- PostgreSQL Service annotations.
+    annotations: {}
+  # -- PostgreSQL pod security context. UID/GID 70 matches the default Alpine image.
+  podSecurityContext:
+    fsGroup: 70
+    fsGroupChangePolicy: OnRootMismatch
+  persistence:
+    # -- Persist PostgreSQL data.
+    enabled: true
+    # -- Use an existing PVC instead of creating a chart-managed PostgreSQL PVC.
+    existingClaim: ""
+    # -- PVC annotations for PostgreSQL data.
+    annotations: {}
+    # -- PostgreSQL PVC access modes.
+    accessModes:
+      - ReadWriteOnce
+    # -- Requested PostgreSQL storage size. Increases require volume expansion support from the StorageClass and CSI driver.
+    size: 8Gi
+    # -- Storage class. Empty uses the cluster default; "-" disables dynamic provisioning. This field is immutable after PVC creation.
+    storageClass: ""
+  # -- PostgreSQL container security context.
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+    runAsUser: 70
+    runAsGroup: 70
+    seccompProfile:
+      type: RuntimeDefault
+  # -- PostgreSQL resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  # -- PostgreSQL pod node selector.
+  nodeSelector: {}
+  # -- PostgreSQL pod tolerations.
+  tolerations: []
+  # -- PostgreSQL pod affinity rules.
+  affinity: {}
+  # -- Grace period for PostgreSQL termination so the official image can stop cleanly.
+  terminationGracePeriodSeconds: 60
+  # -- StatefulSet revision history limit.
+  revisionHistoryLimit: 3
+
+
+externalDatabase:
+  # -- Existing Secret containing DATABASE_URL; required when postgresql.enabled is false.
+  existingSecret: ""
+  # -- DATABASE_URL key in externalDatabase.existingSecret.
+  existingSecretKey: database-url
+
+test:
+  image:
+    # -- Helm test image repository.
+    repository: busybox
+    # -- Helm test image tag.
+    tag: "1.36.1"
+    # -- Helm test image pull policy.
+    pullPolicy: IfNotPresent
+  # -- HTTP path checked by the Helm test.
+  path: /api/health

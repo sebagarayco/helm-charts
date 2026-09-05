@@ -1,0 +1,25 @@
+image:
+  repository: nginxinc/nginx-unprivileged
+  tag: "1.27-alpine"
+  pullPolicy: IfNotPresent
+
+app:
+  command: []
+  args: []
+
+service:
+  targetPort: 8080
+
+persistence:
+  enabled: false
+
+probes:
+  startup:
+    path: /
+  readiness:
+    path: /
+  liveness:
+    path: /
+
+test:
+  path: /

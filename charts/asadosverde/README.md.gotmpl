@@ -1,0 +1,66 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+## Production setup
+
+The default application image is the private GHCR package `ghcr.io/sebagarayco/asadosverde`. Create a registry Secret and reference it with `imagePullSecrets`:
+
+```shell
+kubectl create secret docker-registry ghcr-pull-secret \
+  --docker-server=ghcr.io \
+  --docker-username='<github-user>' \
+  --docker-password='<github-token>'
+```
+
+Create a separate application Secret and set `app.existingSecret`. The container requires `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_EMAIL`, and `BOOTSTRAP_ADMIN_PASSWORD` on every startup. `BOOTSTRAP_ADMIN_NICKNAME` is optional. The same Secret can contain `VERIFICATION_CODE_PEPPER`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and other sensitive application environment variables. Do not put their values in a values file.
+
+The image entrypoint applies Prisma migrations and runs the idempotent seed before starting the server. This chart deliberately does not create a duplicate migration Job. Keep `app.command` and `app.args` empty unless using a test image.
+
+## Database modes
+
+PostgreSQL is enabled by default. The chart creates a stable headless Service, a single-replica StatefulSet, and a standalone chart-managed PVC mounted at the official image data root with `PGDATA` in a subdirectory. Keeping the claim outside `volumeClaimTemplates` allows supported size expansion without changing immutable StatefulSet fields. When `postgresql.auth.existingSecret` is empty, Helm generates an alphanumeric password and stores both `postgres-password` and `database-url` in a release Secret. `lookup` preserves the password on upgrades, and both PostgreSQL and the application read the same Secret.
+
+To manage credentials externally, set `postgresql.auth.existingSecret`. That Secret must contain the keys configured by `postgresql.auth.passwordKey` and `postgresql.auth.databaseUrlKey`, and the URL must use the same password as the password key.
+
+To use external PostgreSQL, disable the bundled database and reference a Secret containing the complete Prisma-compatible URL:
+
+```yaml
+postgresql:
+  enabled: false
+externalDatabase:
+  existingSecret: asadosverde-external-db
+  existingSecretKey: database-url
+```
+
+Rendering fails when PostgreSQL is disabled without both external Secret settings.
+
+## Persistence
+
+Uploaded profile images are written to `/app/uploads` and use a PVC by default. PostgreSQL uses its own stable standalone PVC, or the claim named by `postgresql.persistence.existingClaim`. Empty storage class values use the cluster default and keep the chart portable. Set either storage class explicitly, or use `values-homelab.yaml`, which selects `proxmox-zfs` for both claims.
+
+PVC storage classes and access modes are immutable after creation. Changing either requires provisioning a replacement claim and migrating data, or selecting a prepared claim with `existingClaim`. Increasing `postgresql.persistence.size` is supported only when the selected StorageClass and CSI driver allow volume expansion; shrinking a PVC is not supported by Kubernetes.
+
+## Homelab deployment
+
+`values-homelab.yaml` provides the `cloudflare-tunnel` ingress class, `asados.sebops.co` host, external-dns and cert-manager annotations, `asados-tls`, and `proxmox-zfs` storage classes. It contains Secret names but no credentials:
+
+```shell
+helm upgrade --install asadosverde . \
+  --namespace asadosverde --create-namespace \
+  --values values-homelab.yaml
+```
+
+Create `ghcr-pull-secret` and `asadosverde-app` in that namespace before installation. Back up both PVCs and the generated PostgreSQL Secret. Helm cannot recover a generated database password if its Secret is deleted while the database volume remains.
+
+## CI installation
+
+`ci/ct-values.yaml` replaces the private application image with public unprivileged nginx, adjusts ports and probes, and disables upload persistence. Chart-testing automatically discovers this values file and can therefore exercise installation without weakening production defaults:
+
+```shell
+ct install --config ../../ct.yaml --charts .
+```
+
+{{ template "chart.valuesSection" . }}

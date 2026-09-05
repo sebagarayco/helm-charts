@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "asadosverde.fullname" . }}-test-connection"
+  labels:
+    {{- include "asadosverde.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: "{{ .Values.test.image.repository }}:{{ .Values.test.image.tag }}"
+      imagePullPolicy: {{ .Values.test.image.pullPolicy }}
+      command:
+        - wget
+      args:
+        - --spider
+        - --timeout=10
+        - "http://{{ include "asadosverde.fullname" . }}:{{ .Values.service.port }}{{ .Values.test.path }}"

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: asadosverde
+description: A production-oriented Helm chart for Asados Verde
+type: application
+version: 1.0.0
+appVersion: "0.1.0"

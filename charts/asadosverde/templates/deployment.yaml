@@ -1,0 +1,142 @@
+{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.existingSecret) }}
+{{- fail "externalDatabase.existingSecret is required when postgresql.enabled is false" }}
+{{- end }}
+{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.existingSecretKey) }}
+{{- fail "externalDatabase.existingSecretKey is required when postgresql.enabled is false" }}
+{{- end }}
+{{- if and .Values.postgresql.enabled (not .Values.postgresql.auth.passwordKey) }}
+{{- fail "postgresql.auth.passwordKey is required when postgresql.enabled is true" }}
+{{- end }}
+{{- if and .Values.postgresql.enabled (not .Values.postgresql.auth.databaseUrlKey) }}
+{{- fail "postgresql.auth.databaseUrlKey is required when postgresql.enabled is true" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "asadosverde.fullname" . }}
+  labels:
+    {{- include "asadosverde.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "asadosverde.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/runtime-config: {{ printf "%v|%v|%v|%v" .Values.mockData .Values.app.existingSecret .Values.postgresql.auth.existingSecret .Values.externalDatabase.existingSecret | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- with omit .Values.podLabels "app.kubernetes.io/name" "app.kubernetes.io/instance" "app.kubernetes.io/component" }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "asadosverde.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "asadosverde.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- with .Values.app.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.app.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ ternary (include "asadosverde.postgresql.secretName" .) .Values.externalDatabase.existingSecret .Values.postgresql.enabled }}
+                  key: {{ ternary .Values.postgresql.auth.databaseUrlKey .Values.externalDatabase.existingSecretKey .Values.postgresql.enabled }}
+            - name: MOCK_DATA
+              value: {{ ternary "true" "false" .Values.mockData | quote }}
+            - name: UPLOAD_DIR
+              value: /app/uploads
+            {{- with .Values.app.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.app.existingSecret .Values.app.envFrom }}
+          envFrom:
+            {{- if .Values.app.existingSecret }}
+            - secretRef:
+                name: {{ .Values.app.existingSecret }}
+            {{- end }}
+            {{- with .Values.app.envFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "asadosverde.uploadsClaimName" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
