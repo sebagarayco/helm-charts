@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a new chart or an improvement to an existing chart.
+title: "[Feature]: "
+labels:
+  - type:feature
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem or missing capability should this repository address?
+      placeholder: Describe the user or operator need.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What observable result should the change provide?
+      placeholder: Describe the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Which chart, files, and deployment scenarios are included or excluded?
+      placeholder: Define the intended boundaries.
+    validations:
+      required: true
+  - type: dropdown
+    id: change_type
+    attributes:
+      label: Change type
+      description: Select the closest type of chart change.
+      options:
+        - New chart
+        - Existing chart enhancement
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: How should maintainers verify the change?
+      placeholder: List linting, rendering, installation, or upgrade checks.
+    validations:
+      required: true
