@@ -1,0 +1,33 @@
+imagePullSecrets:
+  - name: ghcr-pull-secret
+
+app:
+  existingSecret: asadosverde-app
+  env:
+    - name: APP_URL
+      value: https://asados.sebops.co
+    - name: GOOGLE_REDIRECT_URI
+      value: https://asados.sebops.co/api/auth/google/callback
+
+ingress:
+  enabled: true
+  className: cloudflare-tunnel
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: asados.sebops.co
+    cert-manager.io/cluster-issuer: cloudflare-sebops
+  hosts:
+    - host: asados.sebops.co
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: asados-tls
+      hosts:
+        - asados.sebops.co
+
+persistence:
+  storageClass: proxmox-zfs
+
+postgresql:
+  persistence:
+    storageClass: proxmox-zfs

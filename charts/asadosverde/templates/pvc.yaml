@@ -1,0 +1,43 @@
+{{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "asadosverde.uploadsClaimName" . }}
+  labels:
+    {{- include "asadosverde.labels" . | nindent 4 }}
+  {{- with .Values.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ ternary "" .Values.persistence.storageClass (eq .Values.persistence.storageClass "-") | quote }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.postgresql.enabled .Values.postgresql.persistence.enabled (not .Values.postgresql.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "asadosverde.postgresql.claimName" . }}
+  labels:
+    {{- include "asadosverde.postgresql.labels" . | nindent 4 }}
+  {{- with .Values.postgresql.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml .Values.postgresql.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.persistence.size }}
+  {{- if .Values.postgresql.persistence.storageClass }}
+  storageClassName: {{ ternary "" .Values.postgresql.persistence.storageClass (eq .Values.postgresql.persistence.storageClass "-") | quote }}
+  {{- end }}
+{{- end }}
