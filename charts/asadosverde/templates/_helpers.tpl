@@ -56,6 +56,18 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{/* AzureKeyVaultSecret resource labels. */}}
+{{- define "asadosverde.azureKeyVaultSecret.labels" -}}
+helm.sh/chart: {{ include "asadosverde.chart" . }}
+app.kubernetes.io/name: {{ include "asadosverde.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/component: secret-sync
+{{- end }}
+
 {{/* Service account name. */}}
 {{- define "asadosverde.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}

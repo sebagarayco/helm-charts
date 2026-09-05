@@ -7,6 +7,9 @@ app:
   command: []
   args: []
 
+azureKeyVaultSecrets:
+  enabled: false
+
 service:
   targetPort: 8080
 

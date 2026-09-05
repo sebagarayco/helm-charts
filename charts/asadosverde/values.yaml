@@ -18,6 +18,35 @@ nameOverride: ""
 # -- Override the fully qualified application name.
 fullnameOverride: ""
 
+azureKeyVaultSecrets:
+  # -- Create akv2k8s AzureKeyVaultSecret resources. The akv2k8s CRD and controller must already be installed.
+  enabled: false
+  # -- AzureKeyVaultSecret API version served by the installed akv2k8s CRD.
+  apiVersion: spv.no/v2beta1
+  # -- Default Azure Key Vault name for entries that do not set vaultName.
+  vaultName: ""
+  # -- AzureKeyVaultSecret resources to create.
+  secrets: []
+  # Example:
+  # secrets:
+  #   - name: application-config-sync
+  #     annotations: {}
+  #     labels: {}
+  #     vaultName: ""
+  #     azureIdentity:
+  #       name: ""
+  #     object:
+  #       name: application-config
+  #       type: multi-key-value-secret
+  #       version: ""
+  #       contentType: application/x-json
+  #     transforms: []
+  #     output:
+  #       name: application-secrets
+  #       type: Opaque
+  #       dataKey: ""
+  #       chainOrder: ""
+
 serviceAccount:
   # -- Create a service account for the application.
   create: true

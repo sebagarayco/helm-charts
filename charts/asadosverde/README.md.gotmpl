@@ -9,7 +9,7 @@
 The default application image is the private GHCR package `ghcr.io/sebagarayco/asadosverde`. Create a registry Secret and reference it with `imagePullSecrets`:
 
 ```shell
-kubectl create secret docker-registry ghcr-pull-secret \
+kubectl create secret docker-registry registry-credentials \
   --docker-server=ghcr.io \
   --docker-username='<github-user>' \
   --docker-password='<github-token>'
@@ -18,6 +18,30 @@ kubectl create secret docker-registry ghcr-pull-secret \
 Create a separate application Secret and set `app.existingSecret`. The container requires `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_EMAIL`, and `BOOTSTRAP_ADMIN_PASSWORD` on every startup. `BOOTSTRAP_ADMIN_NICKNAME` is optional. The same Secret can contain `VERIFICATION_CODE_PEPPER`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and other sensitive application environment variables. Do not put their values in a values file.
 
 The image entrypoint applies Prisma migrations and runs the idempotent seed before starting the server. This chart deliberately does not create a duplicate migration Job. Keep `app.command` and `app.args` empty unless using a test image.
+
+## Azure Key Vault secret synchronization
+
+The chart can optionally create akv2k8s `AzureKeyVaultSecret` resources. It does not install the CRD or controller and does not provision Azure resources. The feature is disabled by default, so `app.existingSecret`, `postgresql.auth.existingSecret`, `externalDatabase.existingSecret`, and `imagePullSecrets` continue to support manually provisioned Kubernetes Secrets.
+
+Set `azureKeyVaultSecrets.apiVersion` to a version served by the installed CRD. The default is the current upstream `spv.no/v2beta1`; override it when the cluster serves another version. Resource names must be unique. Entries inherit `azureKeyVaultSecrets.vaultName` and can override it with `vaultName`. They can also select an Azure identity when the selected CRD version supports it, pin an object version, apply the ordered `trim`, `base64encode`, and `base64decode` transforms, and configure the output Secret type, data key, or `ensureserverfirst` certificate chain order.
+
+For `multi-key-value-secret`, store one JSON or YAML object in Key Vault and set the matching `contentType`; its keys become Kubernetes Secret keys, so `dataKey` is omitted. Point `app.existingSecret` at the configured output Secret name when the object contains application environment variables.
+
+To materialize private-registry credentials, use output type `kubernetes.io/dockerconfigjson`, set `dataKey` to `.dockerconfigjson`, and reference the output Secret with `imagePullSecrets`. The Key Vault object must contain the raw, valid Docker config JSON payload, not an already base64-encoded Kubernetes Secret:
+
+```json
+{
+  "auths": {
+    "registry.example.com": {
+      "username": "<registry-user>",
+      "password": "<registry-token>",
+      "auth": "<base64-of-username-colon-token>"
+    }
+  }
+}
+```
+
+The controller can generate `auth` when it is omitted. Helm does not wait for the controller to materialize output Secrets, so deployment orchestration must account for that asynchronous boundary.
 
 ## Database modes
 
@@ -39,21 +63,9 @@ Rendering fails when PostgreSQL is disabled without both external Secret setting
 
 ## Persistence
 
-Uploaded profile images are written to `/app/uploads` and use a PVC by default. PostgreSQL uses its own stable standalone PVC, or the claim named by `postgresql.persistence.existingClaim`. Empty storage class values use the cluster default and keep the chart portable. Set either storage class explicitly, or use `values-homelab.yaml`, which selects `proxmox-zfs` for both claims.
+Uploaded profile images are written to `/app/uploads` and use a PVC by default. PostgreSQL uses its own stable standalone PVC, or the claim named by `postgresql.persistence.existingClaim`. Empty storage class values use the cluster default and keep the chart portable. Set either storage class explicitly when required by the target cluster.
 
 PVC storage classes and access modes are immutable after creation. Changing either requires provisioning a replacement claim and migrating data, or selecting a prepared claim with `existingClaim`. Increasing `postgresql.persistence.size` is supported only when the selected StorageClass and CSI driver allow volume expansion; shrinking a PVC is not supported by Kubernetes.
-
-## Homelab deployment
-
-`values-homelab.yaml` provides the `cloudflare-tunnel` ingress class, `asados.sebops.co` host, external-dns and cert-manager annotations, `asados-tls`, and `proxmox-zfs` storage classes. It contains Secret names but no credentials:
-
-```shell
-helm upgrade --install asadosverde . \
-  --namespace asadosverde --create-namespace \
-  --values values-homelab.yaml
-```
-
-Create `ghcr-pull-secret` and `asadosverde-app` in that namespace before installation. Back up both PVCs and the generated PostgreSQL Secret. Helm cannot recover a generated database password if its Secret is deleted while the database volume remains.
 
 ## CI installation
 
