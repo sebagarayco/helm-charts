@@ -38,6 +38,7 @@ assert_contains "$tmp_dir/valid.yaml" "kind: CronJob"
 assert_contains "$tmp_dir/valid.yaml" "- -e"
 assert_contains "$tmp_dir/valid.yaml" "const timeout = setTimeout(() => controller.abort(), 30000);"
 assert_contains "$tmp_dir/valid.yaml" "if (!response.ok)"
+# shellcheck disable=SC2016
 assert_contains "$tmp_dir/valid.yaml" 'headers: { authorization: `Bearer ${token}` }'
 assert_contains "$tmp_dir/valid.yaml" 'schedule: "0 * * * *"'
 assert_contains "$tmp_dir/valid.yaml" 'timeZone: "America/Argentina/Buenos_Aires"'
