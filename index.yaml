@@ -3,6 +3,16 @@ entries:
   asadosverde:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-09-07T21:00:37.547222226Z"
+    description: A production-oriented Helm chart for Asados Verde
+    digest: 53b858cc5ac5265cf88fb389a5be0a6fb2852977dd333b63b69b9cc620671c85
+    name: asadosverde
+    type: application
+    urls:
+    - https://github.com/sebagarayco/helm-charts/releases/download/asadosverde-1.1.0/asadosverde-1.1.0.tgz
+    version: 1.1.0
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-09-05T19:03:59.471020427Z"
     description: A production-oriented Helm chart for Asados Verde
     digest: 0f038d4abc9e99fe20c668e0404c248ef129efaedda6a59fd6576c79aedbae71
@@ -145,4 +155,4 @@ entries:
     urls:
     - https://github.com/sebagarayco/helm-charts/releases/download/filestash-0.2.0/filestash-0.2.0.tgz
     version: 0.2.0
-generated: "2026-09-05T19:03:59.672158072Z"
+generated: "2026-09-07T21:00:37.547232896Z"
