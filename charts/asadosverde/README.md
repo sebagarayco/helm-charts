@@ -1,6 +1,6 @@
 # asadosverde
 
-![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 A production-oriented Helm chart for Asados Verde
 
@@ -18,6 +18,12 @@ kubectl create secret docker-registry registry-credentials \
 Create a separate application Secret and set `app.existingSecret`. The container requires `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_EMAIL`, and `BOOTSTRAP_ADMIN_PASSWORD` on every startup. `BOOTSTRAP_ADMIN_NICKNAME` is optional. The same Secret can contain `VERIFICATION_CODE_PEPPER`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and other sensitive application environment variables. Do not put their values in a values file.
 
 The image entrypoint applies Prisma migrations and runs the idempotent seed before starting the server. This chart deliberately does not create a duplicate migration Job. Keep `app.command` and `app.args` empty unless using a test image.
+
+## Vote reminders
+
+The optional `voteReminder` CronJob invokes the application's protected internal endpoint once per hour. It is disabled by default because the chart does not provision its bearer token. To enable it, create a Kubernetes Secret containing the token, set `voteReminder.secret.existingSecret`, and keep the token itself out of values files. The CronJob reads only the configured key through a `secretKeyRef`; it does not embed or print the token.
+
+The application owns the local reminder hour, Buenos Aires eligibility rules, and same-day deduplication. The CronJob therefore remains reusable and only supplies a reliable hourly trigger. `voteReminder.timeZone` defaults to `America/Argentina/Buenos_Aires` and requires Kubernetes 1.27 or newer. Set it to an empty string on older clusters to omit the CronJob `timeZone` field.
 
 ## Azure Key Vault secret synchronization
 
@@ -174,3 +180,17 @@ ct install --config ../../ct.yaml --charts .
 | test.image.tag | string | `"1.36.1"` | Helm test image tag. |
 | test.path | string | `"/api/health"` | HTTP path checked by the Helm test. |
 | tolerations | list | `[]` | Application pod tolerations. |
+| voteReminder.activeDeadlineSeconds | int | `300` | Maximum runtime, in seconds, for each Job. |
+| voteReminder.backoffLimit | int | `2` | Number of retries before a Job is marked failed. |
+| voteReminder.concurrencyPolicy | string | `"Forbid"` | How the CronJob handles overlapping executions. |
+| voteReminder.enabled | bool | `false` | Create an hourly CronJob that invokes the application's internal vote-reminder endpoint. |
+| voteReminder.endpointPath | string | `"/api/internal/vote-reminders"` | Internal application endpoint invoked by the CronJob. |
+| voteReminder.failedJobsHistoryLimit | int | `3` | Number of failed Jobs retained. |
+| voteReminder.resources | object | `{"limits":{"memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}` | Vote-reminder container resource requests and limits. |
+| voteReminder.restartPolicy | string | `"Never"` | Pod restart policy for reminder Jobs. |
+| voteReminder.schedule | string | `"0 * * * *"` | Cron schedule. The application decides whether the current Buenos Aires hour is eligible. |
+| voteReminder.secret.existingSecret | string | `""` | Existing Secret containing the scheduler bearer token; required when voteReminder.enabled is true. |
+| voteReminder.secret.key | string | `"VOTE_REMINDER_SCHEDULER_SECRET"` | Key containing the scheduler bearer token; required when voteReminder.enabled is true. |
+| voteReminder.startingDeadlineSeconds | int | `300` | Maximum delay, in seconds, for starting a missed scheduled Job. |
+| voteReminder.successfulJobsHistoryLimit | int | `1` | Number of successful Jobs retained. |
+| voteReminder.timeZone | string | `"America/Argentina/Buenos_Aires"` | Cron schedule time zone. Requires Kubernetes 1.27 or newer; set empty for older clusters. |

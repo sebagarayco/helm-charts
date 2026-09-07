@@ -19,6 +19,12 @@ Create a separate application Secret and set `app.existingSecret`. The container
 
 The image entrypoint applies Prisma migrations and runs the idempotent seed before starting the server. This chart deliberately does not create a duplicate migration Job. Keep `app.command` and `app.args` empty unless using a test image.
 
+## Vote reminders
+
+The optional `voteReminder` CronJob invokes the application's protected internal endpoint once per hour. It is disabled by default because the chart does not provision its bearer token. To enable it, create a Kubernetes Secret containing the token, set `voteReminder.secret.existingSecret`, and keep the token itself out of values files. The CronJob reads only the configured key through a `secretKeyRef`; it does not embed or print the token.
+
+The application owns the local reminder hour, Buenos Aires eligibility rules, and same-day deduplication. The CronJob therefore remains reusable and only supplies a reliable hourly trigger. `voteReminder.timeZone` defaults to `America/Argentina/Buenos_Aires` and requires Kubernetes 1.27 or newer. Set it to an empty string on older clusters to omit the CronJob `timeZone` field.
+
 ## Azure Key Vault secret synchronization
 
 The chart can optionally create akv2k8s `AzureKeyVaultSecret` resources. It does not install the CRD or controller and does not provision Azure resources. The feature is disabled by default, so `app.existingSecret`, `postgresql.auth.existingSecret`, `externalDatabase.existingSecret`, and `imagePullSecrets` continue to support manually provisioned Kubernetes Secrets.
