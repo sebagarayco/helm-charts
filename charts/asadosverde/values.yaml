@@ -91,6 +91,42 @@ app:
   # -- Override image arguments.
   args: []
 
+voteReminder:
+  # -- Create an hourly CronJob that invokes the application's internal vote-reminder endpoint.
+  enabled: false
+  # -- Cron schedule. The application decides whether the current Buenos Aires hour is eligible.
+  schedule: "0 * * * *"
+  # -- Cron schedule time zone. Requires Kubernetes 1.27 or newer; set empty for older clusters.
+  timeZone: America/Argentina/Buenos_Aires
+  # -- Internal application endpoint invoked by the CronJob.
+  endpointPath: /api/internal/vote-reminders
+  secret:
+    # -- Existing Secret containing the scheduler bearer token; required when voteReminder.enabled is true.
+    existingSecret: ""
+    # -- Key containing the scheduler bearer token; required when voteReminder.enabled is true.
+    key: VOTE_REMINDER_SCHEDULER_SECRET
+  # -- How the CronJob handles overlapping executions.
+  concurrencyPolicy: Forbid
+  # -- Maximum delay, in seconds, for starting a missed scheduled Job.
+  startingDeadlineSeconds: 300
+  # -- Maximum runtime, in seconds, for each Job.
+  activeDeadlineSeconds: 300
+  # -- Number of retries before a Job is marked failed.
+  backoffLimit: 2
+  # -- Number of successful Jobs retained.
+  successfulJobsHistoryLimit: 1
+  # -- Number of failed Jobs retained.
+  failedJobsHistoryLimit: 3
+  # -- Pod restart policy for reminder Jobs.
+  restartPolicy: Never
+  # -- Vote-reminder container resource requests and limits.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
 # -- Enable the application's demo dataset. Production deployments should keep this false.
 mockData: false
 

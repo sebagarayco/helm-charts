@@ -3,6 +3,23 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* Vote reminder CronJob name. */}}
+{{- define "asadosverde.voteReminder.fullname" -}}
+{{- printf "%s-vote-reminder" (include "asadosverde.fullname" . | trunc 49 | trimSuffix "-") }}
+{{- end }}
+
+{{/* Vote reminder resource labels. */}}
+{{- define "asadosverde.voteReminder.labels" -}}
+helm.sh/chart: {{ include "asadosverde.chart" . }}
+app.kubernetes.io/name: {{ include "asadosverde.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/component: vote-reminder
+{{- end }}
+
 {{/* Create a fully qualified application name. */}}
 {{- define "asadosverde.fullname" -}}
 {{- if .Values.fullnameOverride }}

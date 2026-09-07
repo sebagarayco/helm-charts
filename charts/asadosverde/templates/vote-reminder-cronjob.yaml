@@ -1,0 +1,86 @@
+{{- if .Values.voteReminder.enabled }}
+{{- $existingSecret := required "voteReminder.secret.existingSecret is required when voteReminder.enabled is true" .Values.voteReminder.secret.existingSecret }}
+{{- $secretKey := required "voteReminder.secret.key is required when voteReminder.enabled is true" .Values.voteReminder.secret.key }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "asadosverde.voteReminder.fullname" . }}
+  labels:
+    {{- include "asadosverde.voteReminder.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.voteReminder.schedule | quote }}
+  {{- with .Values.voteReminder.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  concurrencyPolicy: {{ .Values.voteReminder.concurrencyPolicy }}
+  startingDeadlineSeconds: {{ .Values.voteReminder.startingDeadlineSeconds }}
+  successfulJobsHistoryLimit: {{ .Values.voteReminder.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.voteReminder.failedJobsHistoryLimit }}
+  jobTemplate:
+    metadata:
+      labels:
+        {{- include "asadosverde.voteReminder.labels" . | nindent 8 }}
+    spec:
+      activeDeadlineSeconds: {{ .Values.voteReminder.activeDeadlineSeconds }}
+      backoffLimit: {{ .Values.voteReminder.backoffLimit }}
+      template:
+        metadata:
+          labels:
+            {{- include "asadosverde.voteReminder.labels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ include "asadosverde.serviceAccountName" . }}
+          automountServiceAccountToken: false
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: {{ .Values.voteReminder.restartPolicy }}
+          containers:
+            - name: vote-reminder
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              command:
+                - node
+              args:
+                - -e
+                - |
+                  const controller = new AbortController();
+                  const timeout = setTimeout(() => controller.abort(), 30000);
+                  async function invokeVoteReminder() {
+                    const token = process.env.VOTE_REMINDER_SCHEDULER_SECRET;
+                    if (!token) {
+                      throw new Error("Scheduler secret is unavailable");
+                    }
+                    const response = await fetch(process.env.VOTE_REMINDER_URL, {
+                      method: "POST",
+                      headers: { authorization: `Bearer ${token}` },
+                      signal: controller.signal,
+                    });
+                    if (!response.ok) {
+                      console.error(`Vote reminder request failed with HTTP ${response.status}`);
+                      process.exitCode = 1;
+                      return;
+                    }
+                    console.log("Vote reminder request succeeded");
+                  }
+                  invokeVoteReminder()
+                    .catch(() => {
+                      console.error("Vote reminder request failed");
+                      process.exitCode = 1;
+                    })
+                    .finally(() => clearTimeout(timeout));
+              env:
+                - name: VOTE_REMINDER_URL
+                  value: {{ printf "http://%s:%v%s" (include "asadosverde.fullname" .) .Values.service.port .Values.voteReminder.endpointPath | quote }}
+                - name: VOTE_REMINDER_SCHEDULER_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $existingSecret | quote }}
+                      key: {{ $secretKey | quote }}
+              resources:
+                {{- toYaml .Values.voteReminder.resources | nindent 16 }}
+{{- end }}
