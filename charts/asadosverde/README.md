@@ -1,12 +1,16 @@
 # asadosverde
 
-![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.0](https://img.shields.io/badge/AppVersion-1.0.0-informational?style=flat-square)
 
-A production-oriented Helm chart for Asados Verde
+A production-oriented Helm chart for Morfi Verde
+
+## Upgrade compatibility
+
+Morfi Verde is deployed through the existing `asadosverde` chart. The chart name, helper names, Kubernetes resource names, bundled PostgreSQL database and user, Secret names, and PVC names remain `asadosverde` for upgrade compatibility. Upgrade existing releases in place with the same Helm release name.
 
 ## Production setup
 
-The default application image is the private GHCR package `ghcr.io/sebagarayco/asadosverde`. Create a registry Secret and reference it with `imagePullSecrets`:
+The default application image is the private Morfi Verde GHCR package `ghcr.io/sebagarayco/morfiverde`. Create a registry Secret and reference it with `imagePullSecrets`:
 
 ```shell
 kubectl create secret docker-registry registry-credentials \
@@ -99,7 +103,7 @@ ct install --config ../../ct.yaml --charts .
 | externalDatabase.existingSecretKey | string | `"database-url"` | DATABASE_URL key in externalDatabase.existingSecret. |
 | fullnameOverride | string | `""` | Override the fully qualified application name. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
-| image.repository | string | `"ghcr.io/sebagarayco/asadosverde"` | Asados Verde container image repository. |
+| image.repository | string | `"ghcr.io/sebagarayco/morfiverde"` | Morfi Verde container image repository. |
 | image.tag | string | `""` | Image tag. Defaults to the chart appVersion when empty. |
 | imagePullSecrets | list | `[]` | Image pull secrets, required when the GHCR package is private. |
 | ingress.annotations | object | `{}` | Ingress annotations. |
