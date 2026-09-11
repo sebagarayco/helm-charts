@@ -4,9 +4,13 @@
 
 {{ template "chart.description" . }}
 
+## Upgrade compatibility
+
+Morfi Verde is deployed through the existing `asadosverde` chart. The chart name, helper names, Kubernetes resource names, bundled PostgreSQL database and user, Secret names, and PVC names remain `asadosverde` for upgrade compatibility. Upgrade existing releases in place with the same Helm release name.
+
 ## Production setup
 
-The default application image is the private GHCR package `ghcr.io/sebagarayco/asadosverde`. Create a registry Secret and reference it with `imagePullSecrets`:
+The default application image is the private Morfi Verde GHCR package `ghcr.io/sebagarayco/morfiverde`. Create a registry Secret and reference it with `imagePullSecrets`:
 
 ```shell
 kubectl create secret docker-registry registry-credentials \

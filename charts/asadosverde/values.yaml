@@ -4,8 +4,8 @@
 replicaCount: 1
 
 image:
-  # -- Asados Verde container image repository.
-  repository: ghcr.io/sebagarayco/asadosverde
+  # -- Morfi Verde container image repository.
+  repository: ghcr.io/sebagarayco/morfiverde
   # -- Image pull policy.
   pullPolicy: IfNotPresent
   # -- Image tag. Defaults to the chart appVersion when empty.

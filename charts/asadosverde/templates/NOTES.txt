@@ -1,9 +1,9 @@
-Asados Verde has been installed.
+Morfi Verde has been installed.
 
 {{- if not .Values.app.existingSecret }}
 WARNING: app.existingSecret is empty. The production container requires bootstrap
 administrator settings on every startup. Create a Secret and set app.existingSecret
-before deploying the Asados Verde image.
+before deploying the Morfi Verde image.
 {{- end }}
 
 {{- if .Values.ingress.enabled }}
