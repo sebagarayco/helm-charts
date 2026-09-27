@@ -3,6 +3,26 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* Media worker resource name and labels. */}}
+{{- define "asadosverde.mediaWorker.fullname" -}}
+{{- printf "%s-media-worker" (include "asadosverde.fullname" . | trunc 50 | trimSuffix "-") }}
+{{- end }}
+
+{{- define "asadosverde.mediaWorker.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "asadosverde.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: media-worker
+{{- end }}
+
+{{- define "asadosverde.mediaWorker.labels" -}}
+helm.sh/chart: {{ include "asadosverde.chart" . }}
+{{ include "asadosverde.mediaWorker.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
 {{/* Vote reminder CronJob name. */}}
 {{- define "asadosverde.voteReminder.fullname" -}}
 {{- printf "%s-vote-reminder" (include "asadosverde.fullname" . | trunc 49 | trimSuffix "-") }}

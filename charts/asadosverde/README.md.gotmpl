@@ -29,6 +29,14 @@ The optional `voteReminder` CronJob invokes the application's protected internal
 
 The application owns the local reminder hour, Buenos Aires eligibility rules, and same-day deduplication. The CronJob therefore remains reusable and only supplies a reliable hourly trigger. `voteReminder.timeZone` defaults to `America/Argentina/Buenos_Aires` and requires Kubernetes 1.27 or newer. Set it to an empty string on older clusters to omit the CronJob `timeZone` field.
 
+## Media worker
+
+The optional `mediaWorker` Deployment runs one background processor and is disabled by default. Enabling it is a separate production deployment decision. It applies database migrations, then replaces its shell with `scripts/media-worker.ts`; it never runs the application seed. Set `mediaWorker.concurrency` to an integer from 1 through 4.
+
+Local mode shares the application uploads claim and requires `persistence.enabled=true`. The default `ReadWriteOnce` claim only supports application and worker pods together when the storage driver permits both mounts on the same node; use compatible scheduling or storage before enabling it across nodes.
+
+For R2, set `mediaWorker.localPersistence=false`, create one Secret containing the account ID, access key ID, secret access key, and bucket name, then configure `mediaWorker.r2.existingSecret` and its key names. The worker reads only those explicit keys and `DATABASE_URL`; it never imports the Secret with `envFrom`. Rotating an external Secret does not change the pod template, so restart or roll out the worker after rotation.
+
 ## Azure Key Vault secret synchronization
 
 The chart can optionally create akv2k8s `AzureKeyVaultSecret` resources. It does not install the CRD or controller and does not provision Azure resources. The feature is disabled by default, so `app.existingSecret`, `postgresql.auth.existingSecret`, `externalDatabase.existingSecret`, and `imagePullSecrets` continue to support manually provisioned Kubernetes Secrets.

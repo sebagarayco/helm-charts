@@ -28,11 +28,11 @@
 
 | ID | Task | Status | Evidence |
 |---|---|---|---|
-| ODD-AMW-01 | Migrate trusted PR CI to the repo-scoped homelab runner. | In progress | Workflows updated; local verification and commit pending. |
-| ODD-AMW-02 | Add, test, and document the opt-in media worker chart. | Pending | Chart implementation and focused render test pending. |
+| ODD-AMW-01 | Migrate trusted PR CI to the repo-scoped homelab runner. | Complete | Signed commit `478ff29`; YAML parsing and fork-guard assertions passed. |
+| ODD-AMW-02 | Add, test, and document the opt-in media worker chart. | Complete | Helm lint/templates, focused and existing render tests, helm-docs, and ct lint passed; signed work-unit commit contains this tracker. |
 | ODD-AMW-03 | Verify CI after runner PR #22 is deployed. | Pending | No deployment is authorized here; checks may remain queued. |
 
 ## Progress and next step
 
 - Tracker created before workflow or chart source edits.
-- Next: verify ODD-AMW-01 and create its signed work-unit commit.
+- Next: apply the 400-line delivery gate, then publish the PR if admitted; ODD-AMW-03 remains blocked on homelab PR #22 deployment.

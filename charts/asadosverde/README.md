@@ -1,6 +1,6 @@
 # asadosverde
 
-![Version: 1.3.0](https://img.shields.io/badge/Version-1.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.0](https://img.shields.io/badge/AppVersion-1.1.0-informational?style=flat-square)
+![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.9.0](https://img.shields.io/badge/AppVersion-1.9.0-informational?style=flat-square)
 
 A production-oriented Helm chart for Morfi Verde
 
@@ -28,6 +28,14 @@ The image entrypoint applies Prisma migrations and runs the idempotent seed befo
 The optional `voteReminder` CronJob invokes the application's protected internal endpoint once per hour. It is disabled by default because the chart does not provision its bearer token. To enable it, create a Kubernetes Secret containing the token, set `voteReminder.secret.existingSecret`, and keep the token itself out of values files. The CronJob reads only the configured key through a `secretKeyRef`; it does not embed or print the token.
 
 The application owns the local reminder hour, Buenos Aires eligibility rules, and same-day deduplication. The CronJob therefore remains reusable and only supplies a reliable hourly trigger. `voteReminder.timeZone` defaults to `America/Argentina/Buenos_Aires` and requires Kubernetes 1.27 or newer. Set it to an empty string on older clusters to omit the CronJob `timeZone` field.
+
+## Media worker
+
+The optional `mediaWorker` Deployment runs one background processor and is disabled by default. Enabling it is a separate production deployment decision. It applies database migrations, then replaces its shell with `scripts/media-worker.ts`; it never runs the application seed. Set `mediaWorker.concurrency` to an integer from 1 through 4.
+
+Local mode shares the application uploads claim and requires `persistence.enabled=true`. The default `ReadWriteOnce` claim only supports application and worker pods together when the storage driver permits both mounts on the same node; use compatible scheduling or storage before enabling it across nodes.
+
+For R2, set `mediaWorker.localPersistence=false`, create one Secret containing the account ID, access key ID, secret access key, and bucket name, then configure `mediaWorker.r2.existingSecret` and its key names. The worker reads only those explicit keys and `DATABASE_URL`; it never imports the Secret with `envFrom`. Rotating an external Secret does not change the pod template, so restart or roll out the worker after rotation.
 
 ## Azure Key Vault secret synchronization
 
@@ -111,6 +119,15 @@ ct install --config ../../ct.yaml --charts .
 | ingress.enabled | bool | `false` | Enable an Ingress for the application. |
 | ingress.hosts | list | `[{"host":"chart-example.local","paths":[{"path":"/","pathType":"Prefix"}]}]` | Ingress hosts and paths. |
 | ingress.tls | list | `[]` | Ingress TLS configuration. |
+| mediaWorker.concurrency | int | `2` | Parallel media jobs handled by the worker. Must be an integer from 1 through 4. |
+| mediaWorker.enabled | bool | `false` | Run one background media-processing worker pod. Production enablement is a separate deployment decision. |
+| mediaWorker.localPersistence | bool | `true` | Use the shared uploads PVC and local media backend. Disable to use R2. |
+| mediaWorker.r2.accessKeyIdKey | string | `"R2_ACCESS_KEY_ID"` | Secret key containing the R2 access key ID. |
+| mediaWorker.r2.accountIdKey | string | `"R2_ACCOUNT_ID"` | Secret key containing the Cloudflare account ID. |
+| mediaWorker.r2.bucketNameKey | string | `"R2_BUCKET_NAME"` | Secret key containing the R2 bucket name. |
+| mediaWorker.r2.existingSecret | string | `""` | Existing Secret containing all R2 credentials; required when localPersistence is false. |
+| mediaWorker.r2.secretAccessKeyKey | string | `"R2_SECRET_ACCESS_KEY"` | Secret key containing the R2 secret access key. |
+| mediaWorker.resources | object | `{"limits":{"cpu":"2","memory":"2Gi"},"requests":{"cpu":"250m","memory":"512Mi"}}` | Media worker resource requests and limits. |
 | mockData | bool | `false` | Enable the application's demo dataset. Production deployments should keep this false. |
 | nameOverride | string | `""` | Override the chart name. |
 | nodeSelector | object | `{}` | Application pod node selector. |
