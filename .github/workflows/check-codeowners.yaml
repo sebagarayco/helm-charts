@@ -2,14 +2,19 @@ name: Check CODEOWNERS
 
 on: workflow_call
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: arc-runners-helm-charts
     steps:
       - uses: actions/checkout@v2
-      - name: install yq
+      - name: Install yq
         run: |
-          sudo snap install yq
+          GOBIN="${RUNNER_TEMP}/bin" go install github.com/mikefarah/yq/v4@v4.45.1
+          echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
       - name: generate CODEOWNERS
         run: |
           ./scripts/check-codeowners.sh > .github/CODEOWNERS

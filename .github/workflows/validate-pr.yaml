@@ -8,9 +8,13 @@ on:
       - reopened
       - synchronize
 
+permissions:
+  contents: read
+
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: arc-runners-helm-charts
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
