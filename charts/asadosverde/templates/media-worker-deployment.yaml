@@ -1,0 +1,123 @@
+{{- if .Values.mediaWorker.enabled }}
+{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.existingSecret) }}
+{{- fail "externalDatabase.existingSecret is required when postgresql.enabled is false" }}
+{{- end }}
+{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.existingSecretKey) }}
+{{- fail "externalDatabase.existingSecretKey is required when postgresql.enabled is false" }}
+{{- end }}
+{{- if and .Values.postgresql.enabled (not .Values.postgresql.auth.databaseUrlKey) }}
+{{- fail "postgresql.auth.databaseUrlKey is required when postgresql.enabled is true" }}
+{{- end }}
+{{- $rawConcurrency := .Values.mediaWorker.concurrency }}
+{{- if not (or (kindIs "int" $rawConcurrency) (kindIs "int64" $rawConcurrency) (kindIs "float64" $rawConcurrency)) }}
+{{- fail "mediaWorker.concurrency must be an integer from 1 through 4" }}
+{{- end }}
+{{- $numericConcurrency := float64 $rawConcurrency }}
+{{- if or (ne $numericConcurrency (floor $numericConcurrency)) (lt $numericConcurrency 1.0) (gt $numericConcurrency 4.0) }}
+{{- fail "mediaWorker.concurrency must be an integer from 1 through 4" }}
+{{- end }}
+{{- $concurrency := int $rawConcurrency }}
+{{- if and .Values.mediaWorker.localPersistence (not .Values.persistence.enabled) }}
+{{- fail "persistence.enabled must be true when mediaWorker.localPersistence is true" }}
+{{- end }}
+{{- if not .Values.mediaWorker.localPersistence }}
+{{- $_ := required "mediaWorker.r2.existingSecret is required when mediaWorker.localPersistence is false" .Values.mediaWorker.r2.existingSecret }}
+{{- $_ := required "mediaWorker.r2.accountIdKey is required when mediaWorker.localPersistence is false" .Values.mediaWorker.r2.accountIdKey }}
+{{- $_ := required "mediaWorker.r2.accessKeyIdKey is required when mediaWorker.localPersistence is false" .Values.mediaWorker.r2.accessKeyIdKey }}
+{{- $_ := required "mediaWorker.r2.secretAccessKeyKey is required when mediaWorker.localPersistence is false" .Values.mediaWorker.r2.secretAccessKeyKey }}
+{{- $_ := required "mediaWorker.r2.bucketNameKey is required when mediaWorker.localPersistence is false" .Values.mediaWorker.r2.bucketNameKey }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "asadosverde.mediaWorker.fullname" . }}
+  labels:
+    {{- include "asadosverde.mediaWorker.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "asadosverde.mediaWorker.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with omit .Values.podLabels "app.kubernetes.io/name" "app.kubernetes.io/instance" "app.kubernetes.io/component" }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "asadosverde.mediaWorker.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "asadosverde.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      terminationGracePeriodSeconds: 180
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: media-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              ./node_modules/.bin/prisma migrate deploy
+              exec ./node_modules/.bin/tsx scripts/media-worker.ts
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ ternary (include "asadosverde.postgresql.secretName" .) .Values.externalDatabase.existingSecret .Values.postgresql.enabled }}
+                  key: {{ ternary .Values.postgresql.auth.databaseUrlKey .Values.externalDatabase.existingSecretKey .Values.postgresql.enabled }}
+            - name: MEDIA_WORKER_CONCURRENCY
+              value: {{ $concurrency | quote }}
+            - name: MEDIA_STORAGE_BACKEND
+              value: {{ ternary "LOCAL" "R2" .Values.mediaWorker.localPersistence | quote }}
+            {{- if .Values.mediaWorker.localPersistence }}
+            - name: UPLOAD_DIR
+              value: /app/uploads
+            {{- else }}
+            {{- range $name, $key := dict "R2_ACCOUNT_ID" .Values.mediaWorker.r2.accountIdKey "R2_ACCESS_KEY_ID" .Values.mediaWorker.r2.accessKeyIdKey "R2_SECRET_ACCESS_KEY" .Values.mediaWorker.r2.secretAccessKeyKey "R2_BUCKET_NAME" .Values.mediaWorker.r2.bucketNameKey }}
+            - name: {{ $name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.mediaWorker.r2.existingSecret | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.mediaWorker.resources | nindent 12 }}
+          {{- if .Values.mediaWorker.localPersistence }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          {{- end }}
+      {{- if .Values.mediaWorker.localPersistence }}
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: {{ include "asadosverde.uploadsClaimName" . }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

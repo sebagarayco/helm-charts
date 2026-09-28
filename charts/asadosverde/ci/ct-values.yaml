@@ -10,6 +10,9 @@ app:
 azureKeyVaultSecrets:
   enabled: false
 
+mediaWorker:
+  enabled: false
+
 service:
   targetPort: 8080
 

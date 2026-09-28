@@ -127,6 +127,33 @@ voteReminder:
     limits:
       memory: 128Mi
 
+mediaWorker:
+  # -- Run one background media-processing worker pod. Production enablement is a separate deployment decision.
+  enabled: false
+  # -- Parallel media jobs handled by the worker. Must be an integer from 1 through 4.
+  concurrency: 2
+  # -- Use the shared uploads PVC and local media backend. Disable to use R2.
+  localPersistence: true
+  r2:
+    # -- Existing Secret containing all R2 credentials; required when localPersistence is false.
+    existingSecret: ""
+    # -- Secret key containing the Cloudflare account ID.
+    accountIdKey: R2_ACCOUNT_ID
+    # -- Secret key containing the R2 access key ID.
+    accessKeyIdKey: R2_ACCESS_KEY_ID
+    # -- Secret key containing the R2 secret access key.
+    secretAccessKeyKey: R2_SECRET_ACCESS_KEY
+    # -- Secret key containing the R2 bucket name.
+    bucketNameKey: R2_BUCKET_NAME
+  # -- Media worker resource requests and limits.
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
 # -- Enable the application's demo dataset. Production deployments should keep this false.
 mockData: false
 

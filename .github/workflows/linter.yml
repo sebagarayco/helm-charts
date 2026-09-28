@@ -12,10 +12,14 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Lint Code Base
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: arc-runners-helm-charts
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

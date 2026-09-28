@@ -30,9 +30,13 @@ on:
 env:
   CT_CONFIGFILE: ${{ inputs.ct_configfile }}
 
+permissions:
+  contents: read
+
 jobs:
   lint-test:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: arc-runners-helm-charts
     steps:
       - name: Checkout
         uses: actions/checkout@v4
