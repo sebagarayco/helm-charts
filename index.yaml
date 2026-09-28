@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   asadosverde:
   - apiVersion: v2
+    appVersion: 1.9.0
+    created: "2026-09-28T00:38:37.621330739Z"
+    description: A production-oriented Helm chart for Morfi Verde
+    digest: 7f88c319503a2055af0c54b9fe3551f99c6338b598b98d90b6ea78820ced1a52
+    name: asadosverde
+    type: application
+    urls:
+    - https://github.com/sebagarayco/helm-charts/releases/download/asadosverde-1.4.0/asadosverde-1.4.0.tgz
+    version: 1.4.0
+  - apiVersion: v2
     appVersion: 1.1.0
     created: "2026-09-11T18:22:47.522915284Z"
     description: A production-oriented Helm chart for Morfi Verde
@@ -175,4 +185,4 @@ entries:
     urls:
     - https://github.com/sebagarayco/helm-charts/releases/download/filestash-0.2.0/filestash-0.2.0.tgz
     version: 0.2.0
-generated: "2026-09-11T18:22:47.522941202Z"
+generated: "2026-09-28T00:38:37.621376315Z"
