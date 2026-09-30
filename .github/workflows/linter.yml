@@ -37,7 +37,7 @@ jobs:
         env:
           FILTER_REGEX_EXCLUDE: .*(README\.md|Chart\.yaml|NOTES.txt).*
           FILTER_REGEX_INCLUDE: ${{ inputs.filter_regex_include }}
-          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_ALL_CODEBASE: true
           VALIDATE_KUBERNETES_KUBEVAL: false
           VALIDATE_YAML: false
           DEFAULT_BRANCH: main

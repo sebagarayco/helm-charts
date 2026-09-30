@@ -13,6 +13,9 @@ azureKeyVaultSecrets:
 mediaWorker:
   enabled: false
 
+mailWorker:
+  enabled: false
+
 service:
   targetPort: 8080
 

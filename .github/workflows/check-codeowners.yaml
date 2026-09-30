@@ -11,6 +11,10 @@ jobs:
     runs-on: arc-runners-helm-charts
     steps:
       - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.1
       - name: Install yq
         run: |
           GOBIN="${RUNNER_TEMP}/bin" go install github.com/mikefarah/yq/v4@v4.45.1
