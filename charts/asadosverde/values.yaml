@@ -154,6 +154,32 @@ mediaWorker:
       cpu: "2"
       memory: 2Gi
 
+mailWorker:
+  # -- Run one background mail retry worker pod. Requires a Morfiverde 1.10.0 or newer image.
+  enabled: false
+  secret:
+    # -- Existing Secret containing Resend settings. Defaults to app.existingSecret when empty.
+    existingSecret: ""
+    # -- Secret key containing the Resend API key; required when mailWorker.enabled is true.
+    apiKeyKey: RESEND_API_KEY
+    # -- Optional Secret key containing the sender address. The key may be absent from the Secret.
+    fromEmailKey: RESEND_FROM_EMAIL
+  # -- Delay between retry polls in milliseconds.
+  pollMs: 300000
+  # -- Delivery claim lease in milliseconds.
+  leaseMs: 120000
+  # -- Maximum deliveries selected per retry batch.
+  batchSize: 20
+  # -- Maximum attempts allowed for one delivery.
+  maxAttempts: 5
+  # -- Mail worker resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
 # -- Enable the application's demo dataset. Production deployments should keep this false.
 mockData: false
 

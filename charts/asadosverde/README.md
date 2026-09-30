@@ -1,6 +1,6 @@
 # asadosverde
 
-![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.9.0](https://img.shields.io/badge/AppVersion-1.9.0-informational?style=flat-square)
+![Version: 1.5.0](https://img.shields.io/badge/Version-1.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.10.0](https://img.shields.io/badge/AppVersion-1.10.0-informational?style=flat-square)
 
 A production-oriented Helm chart for Morfi Verde
 
@@ -36,6 +36,14 @@ The optional `mediaWorker` Deployment runs one background processor and is disab
 Local mode shares the application uploads claim and requires `persistence.enabled=true`. The default `ReadWriteOnce` claim only supports application and worker pods together when the storage driver permits both mounts on the same node; use compatible scheduling or storage before enabling it across nodes.
 
 For R2, set `mediaWorker.localPersistence=false`, create one Secret containing the account ID, access key ID, secret access key, and bucket name, then configure `mediaWorker.r2.existingSecret` and its key names. The worker reads only those explicit keys and `DATABASE_URL`; it never imports the Secret with `envFrom`. Rotating an external Secret does not change the pod template, so restart or roll out the worker after rotation.
+
+## Mail retry worker
+
+The optional `mailWorker` Deployment retries queued transactional mail and is disabled by default. It requires Morfiverde 1.10.0 or newer. Enabling it applies Prisma migrations and then replaces its shell with the packaged mail retry worker; it does not seed the database or expose a Service, ports, probes, or upload storage.
+
+Set `mailWorker.secret.existingSecret`, or reuse `app.existingSecret`, with the Resend API key under `mailWorker.secret.apiKeyKey`. The optional sender key defaults to `RESEND_FROM_EMAIL` and is read with an optional explicit `secretKeyRef`. The worker never imports the complete Secret with `envFrom`. It uses the same bundled or external `DATABASE_URL` selection as the application and media worker.
+
+Retry defaults are a 300000 ms poll, 120000 ms lease, batch size 20, and maximum 5 attempts. Disable `mailWorker.enabled` to roll back the worker without changing the application or media worker. Restart the Deployment after rotating referenced Secret values.
 
 ## Azure Key Vault secret synchronization
 
@@ -119,6 +127,15 @@ ct install --config ../../ct.yaml --charts .
 | ingress.enabled | bool | `false` | Enable an Ingress for the application. |
 | ingress.hosts | list | `[{"host":"chart-example.local","paths":[{"path":"/","pathType":"Prefix"}]}]` | Ingress hosts and paths. |
 | ingress.tls | list | `[]` | Ingress TLS configuration. |
+| mailWorker.batchSize | int | `20` | Maximum deliveries selected per retry batch. |
+| mailWorker.enabled | bool | `false` | Run one background mail retry worker pod. Requires a Morfiverde 1.10.0 or newer image. |
+| mailWorker.leaseMs | int | `120000` | Delivery claim lease in milliseconds. |
+| mailWorker.maxAttempts | int | `5` | Maximum attempts allowed for one delivery. |
+| mailWorker.pollMs | int | `300000` | Delay between retry polls in milliseconds. |
+| mailWorker.resources | object | `{"limits":{"memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}}` | Mail worker resource requests and limits. |
+| mailWorker.secret.apiKeyKey | string | `"RESEND_API_KEY"` | Secret key containing the Resend API key; required when mailWorker.enabled is true. |
+| mailWorker.secret.existingSecret | string | `""` | Existing Secret containing Resend settings. Defaults to app.existingSecret when empty. |
+| mailWorker.secret.fromEmailKey | string | `"RESEND_FROM_EMAIL"` | Optional Secret key containing the sender address. The key may be absent from the Secret. |
 | mediaWorker.concurrency | int | `2` | Parallel media jobs handled by the worker. Must be an integer from 1 through 4. |
 | mediaWorker.enabled | bool | `false` | Run one background media-processing worker pod. Production enablement is a separate deployment decision. |
 | mediaWorker.localPersistence | bool | `true` | Use the shared uploads PVC and local media backend. Disable to use R2. |

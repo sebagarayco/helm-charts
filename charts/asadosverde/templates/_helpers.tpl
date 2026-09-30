@@ -23,6 +23,26 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{/* Mail worker resource name and labels. */}}
+{{- define "asadosverde.mailWorker.fullname" -}}
+{{- printf "%s-mail-worker" (include "asadosverde.fullname" . | trunc 51 | trimSuffix "-") }}
+{{- end }}
+
+{{- define "asadosverde.mailWorker.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "asadosverde.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: mail-worker
+{{- end }}
+
+{{- define "asadosverde.mailWorker.labels" -}}
+helm.sh/chart: {{ include "asadosverde.chart" . }}
+{{ include "asadosverde.mailWorker.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
 {{/* Vote reminder CronJob name. */}}
 {{- define "asadosverde.voteReminder.fullname" -}}
 {{- printf "%s-vote-reminder" (include "asadosverde.fullname" . | trunc 49 | trimSuffix "-") }}
