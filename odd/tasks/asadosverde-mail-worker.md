@@ -18,6 +18,16 @@
 - Delivery strategy: one cohesive PR unless authored additions plus deletions exceed 400; then require verified `size:exception` authority and rationale or stop.
 - Delegated route evidence: the user explicitly required direct implementation in this repository and authorized its exact origin for issue, branch, push, draft PR, and label operations.
 
+## CI recovery work unit
+
+- **Objective:** Restore PR #33 validation by provisioning the exact Python and Go toolchains required by existing workflow steps.
+- **Root evidence:** `validate` failed because chart-testing could not create its virtual environment without a usable runner Python, while `call-check-codeowners / build` failed because the runner had no `go` executable for the pinned `yq` installation. The separate Super-Linter connection reset is not evidence for a source change unless it reproduces.
+- **Authorized files:** `.github/workflows/validate-pr.yaml`, `.github/workflows/check-codeowners.yaml`, and this ODD tracker only.
+- **Checks:** Parse both workflow YAML files locally; run `actionlint` when already available; run Bash syntax checks, the focused mail-worker script, Helm lint, and `git diff --check`; then observe every new PR check to a terminal state.
+- **Rollback:** Revert only the CI recovery work-unit commit to remove the Python and Go setup steps without reverting the completed chart feature.
+- **Route:** Continue on `feat/asadosverde-mail-worker`, push normally once to its configured `origin`, and update only PR #33 in `sebagarayco/helm-charts`; do not merge, release, or operate on a cluster.
+- **Commit:** This work-unit commit (`ci(workflows): provision validation tools`); resolve its immutable identity from Git history after creation.
+
 ## Acceptance
 
 - The chart version advances one feature minor from refreshed main and `appVersion` is `1.10.0`.
@@ -61,9 +71,11 @@
 | ODD-AMW-01 | Establish the refreshed worktree, chart baseline, TDD mode, and release contract. | Complete | Worktree is based on refreshed `origin/main` at `0709fbd`; chart baseline is `1.4.0` / app `1.9.0`; repository has no TDD configuration. |
 | ODD-AMW-02 | Implement values, helpers, Deployment, focused tests, CI values, and documentation. | Complete | Chart 1.5.0 targets app 1.10.0; focused tests cover disabled, bundled, external, optional sender, explicit Secret keys, and negative renders; helm-docs generated README.md idempotently. |
 | ODD-AMW-03 | Run focused and repository verification, then record rollback and review evidence. | Complete with limitation | Focused, media-worker, and vote-reminder scripts passed; Helm lint and all required renders passed; ct lint/version check passed; bash syntax and diff hygiene passed. ShellCheck is unavailable locally and no cached ShellCheck container exists, so the draft PR records that unexecuted check. Runtime harness: N/A because no isolated cluster harness exists and live-cluster install is prohibited. Rollback boundary is the mail-worker values, helpers, template, test, docs, and version metadata. |
-| ODD-AMW-04 | Resolve an approved issue, create one signed work-unit commit, push, and open a labeled draft PR. | In progress | Issue #32 was created from the feature form, read back, and atomically approved by the authenticated ADMIN actor; the 314-line complete change remains within the 400-line single-PR budget. |
+| ODD-AMW-04 | Resolve an approved issue, create one signed work-unit commit, push, and open a labeled draft PR. | Complete | Signed commit `0028e89778aa58a39b1f18ce9263bb56fabe9317` was pushed and PR #33 was opened against approved issue #32; the 311-line complete chart change remained within the 400-line single-PR budget. |
+| ODD-AMW-05 | Provision missing CI dependencies, verify locally, push one recovery commit, update PR metadata, and observe checks. | In progress | Added Python 3.13.3 setup before chart-testing and Go 1.24.1 setup before the unchanged pinned `yq` install. Local `yq` YAML parsing, Bash syntax, focused mail-worker renders, Helm lint, and diff hygiene passed. `actionlint` was not run because it is unavailable locally. Push, PR metadata readback, and terminal CI evidence are pending. |
 
 ## Progress and next step
 
-- Tracker created before the first chart source write.
-- Next: create the signed work-unit commit, push once, and open the blocked draft PR linked to approved issue #32.
+- The completed chart task remains recorded separately from the bounded CI recovery work unit.
+- Morfiverde release `morfiverde-v1.10.0` is published, satisfying the application release dependency; chart 1.5.0 remains unpublished until a maintainer merges and releases it.
+- Next: apply only the authorized workflow setup steps, verify them, record the recovery commit, push once, and observe PR #33 checks without merging.
