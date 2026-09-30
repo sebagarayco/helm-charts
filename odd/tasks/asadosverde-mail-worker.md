@@ -21,12 +21,21 @@
 ## CI recovery work unit
 
 - **Objective:** Restore PR #33 validation by provisioning the exact Python, Go, and Helm toolchains required by existing workflow steps.
-- **Root evidence:** Commit `5b8ad233bc2c7b28f6ab3b5a1939ae1cdd59a375` fixed Python setup and the Go-backed pinned `yq` installation. The next `validate` run reached `scripts/validate-pr.sh` and failed only because `helm` was absent from `PATH` (`exec: "helm": executable file not found in $PATH`). The passing reusable lint workflow provisions Helm with `azure/setup-helm@v1` and version `v3.8.2`. The separate Super-Linter TLS reset remains external evidence, not grounds for a source change.
+- **Root evidence:** Commit `5b8ad233bc2c7b28f6ab3b5a1939ae1cdd59a375` fixed Python setup and the Go-backed pinned `yq` installation. The next `validate` run reached `scripts/validate-pr.sh` and failed only because `helm` was absent from `PATH` (`exec: "helm": executable file not found in $PATH`). Commit `bacb4cf941bb0b0df4d881377fc9c25a3a868d40` then provisioned Helm with `azure/setup-helm@v1` and version `v3.8.2`.
 - **Authorized files:** This correction is limited to `.github/workflows/validate-pr.yaml` and this ODD tracker; the earlier Python and Go setup files remain otherwise unchanged.
-- **Checks:** Parse the edited workflow YAML locally; run Bash syntax for `scripts/validate-pr.sh`, the focused mail-worker script, Helm lint, and `git diff --check`; then observe every naturally triggered PR check to a terminal state without a manual rerun.
+- **Checks:** Local workflow YAML parsing, Bash syntax for `scripts/validate-pr.sh`, the focused mail-worker script, Helm lint, and `git diff --check` passed. The naturally triggered `validate`, `CODEOWNERS`, and `lint-test` checks passed.
 - **Rollback:** Revert only the Helm correction commit to remove Helm setup while preserving both the completed chart feature and the earlier Python/Go repair.
 - **Route:** Continue on `feat/asadosverde-mail-worker`, push normally once to its configured `origin`, and update only PR #33 in `sebagarayco/helm-charts`; do not merge, release, or operate on a cluster.
-- **Commits:** Python/Go repair `5b8ad233bc2c7b28f6ab3b5a1939ae1cdd59a375`; Helm correction is this work-unit commit (`ci(workflows): provision helm validation`), whose immutable identity is resolved from Git history after creation.
+- **Commits:** Python/Go repair `5b8ad233bc2c7b28f6ab3b5a1939ae1cdd59a375`; Helm correction `bacb4cf941bb0b0df4d881377fc9c25a3a868d40`.
+
+## Super-Linter recovery work unit
+
+- **Objective:** Make Super-Linter v3.12.0 build its file list entirely from the checked-out workspace without Git network or branch operations.
+- **Root cause:** The failing workflow sets `VALIDATE_ALL_CODEBASE=false`. Upstream v3.12.0 `lib/buildFileList.sh` handles that value by running `git pull` and checking out `DEFAULT_BRANCH`; the observed job failed during that Git operation with a TLS reset, before linting. Setting it to `true` selects the local `find` path and deterministically removes both Git operations.
+- **Authorized files:** This correction is limited to `.github/workflows/linter.yml` and this ODD tracker. All filters, disabled validators, action version, permissions, runner, and token configuration must remain unchanged.
+- **Verification:** Psych 3.1.0 parsed `.github/workflows/linter.yml`; the focused assertion found one `VALIDATE_ALL_CODEBASE: true` and no `VALIDATE_ALL_CODEBASE: false`; `git diff --check` passed; status and structural diff review showed only the two authorized modified files plus preserved untracked `.codegraph/`. After a future commit and push, observe only newly triggered CI without rerunning old jobs.
+- **Rollback:** Revert only the future Super-Linter recovery commit, or restore this single environment value to `false`, without reverting either dependency-recovery commit or any chart source.
+- **Route evidence:** The delegated direct ODD instruction explicitly authorizes this two-file local repair for PR #33 and prohibits commit, push, CI rerun, GitHub operations, merge, release, and deployment in this work unit.
 
 ## Acceptance
 
@@ -72,10 +81,12 @@
 | ODD-AMW-02 | Implement values, helpers, Deployment, focused tests, CI values, and documentation. | Complete | Chart 1.5.0 targets app 1.10.0; focused tests cover disabled, bundled, external, optional sender, explicit Secret keys, and negative renders; helm-docs generated README.md idempotently. |
 | ODD-AMW-03 | Run focused and repository verification, then record rollback and review evidence. | Complete with limitation | Focused, media-worker, and vote-reminder scripts passed; Helm lint and all required renders passed; ct lint/version check passed; bash syntax and diff hygiene passed. ShellCheck is unavailable locally and no cached ShellCheck container exists, so the draft PR records that unexecuted check. Runtime harness: N/A because no isolated cluster harness exists and live-cluster install is prohibited. Rollback boundary is the mail-worker values, helpers, template, test, docs, and version metadata. |
 | ODD-AMW-04 | Resolve an approved issue, create one signed work-unit commit, push, and open a labeled draft PR. | Complete | Signed commit `0028e89778aa58a39b1f18ce9263bb56fabe9317` was pushed and PR #33 was opened against approved issue #32; the 311-line complete chart change remained within the 400-line single-PR budget. |
-| ODD-AMW-05 | Provision missing CI dependencies, verify locally, push bounded recovery commits, update PR metadata, and observe checks. | In progress | Commit `5b8ad233bc2c7b28f6ab3b5a1939ae1cdd59a375` fixed Python and Go provisioning. The Helm correction now mirrors the passing lint workflow with `azure/setup-helm@v1` and Helm `v3.8.2`; local workflow YAML parsing, `validate-pr.sh` Bash syntax, focused mail-worker renders, Helm lint, and diff hygiene passed. Commit, push, PR readback, and terminal CI evidence remain pending. |
+| ODD-AMW-05 | Provision missing CI dependencies, verify locally, push bounded recovery commits, update PR metadata, and observe checks. | Complete | Commits `5b8ad233bc2c7b28f6ab3b5a1939ae1cdd59a375` and `bacb4cf941bb0b0df4d881377fc9c25a3a868d40` repaired Python, Go, and Helm provisioning. Local verification passed, and the naturally triggered `validate`, `CODEOWNERS`, and `lint-test` checks passed. |
+| ODD-AMW-06 | Make Super-Linter v3.12.0 enumerate workspace files locally and verify the bounded repair. | In progress | Root cause and two-file boundary are recorded. The local workflow edit, YAML parse, focused value assertion, diff hygiene, and structural review passed; commit, push, and newly triggered CI evidence remain pending. |
 
 ## Progress and next step
 
 - The completed chart task remains recorded separately from the bounded CI recovery work unit.
 - Morfiverde release `morfiverde-v1.10.0` is published, satisfying the application release dependency; chart 1.5.0 remains unpublished until a maintainer merges and releases it.
-- Next: add only the authorized Helm setup step, verify it, record the separate recovery commit, push once, and observe PR #33 checks without merging or manually rerunning workflows.
+- ODD-AMW-05 is complete: both dependency-recovery commits are recorded, and `validate`, `CODEOWNERS`, and `lint-test` passed.
+- Next: a later authorized work unit must commit and push ODD-AMW-06 and observe only its newly triggered PR #33 checks; do not rerun old jobs.
